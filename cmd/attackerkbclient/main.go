@@ -1,4 +1,4 @@
-package attackerkbclient
+package main
 
 import (
 	"fmt"
