@@ -16,7 +16,7 @@ func main() {
 	apiKey := os.Getenv("SHODAN_API_KEY")
 	s := attackerkbclient.New(apiKey)
 
-	topics, err := s.TopicSearch("Confluence")
+	topics, err := s.TopicSearch(os.Args[1])
 	if err != nil {
 		log.Fatalln(err)
 	}
