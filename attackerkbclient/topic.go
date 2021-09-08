@@ -7,22 +7,54 @@ import (
 )
 
 type Topic struct {
-	Id                        string      `json:"id"`
-	EditorId                  string      `json:"editorId"`
-	Name                      string      `json:"name"`
-	Created                   string      `json:"created"`
-	RevisionDate              string      `json:"revisionDate"`
-	DisclosureDate            string      `json:"disclosureDate"`
-	Document                  string      `json:"document"`
-	Metadata                  string      `json:"metadata"`
-	Score                     Score       `json:"score"`
-	Tags                      []Tag       `json:"tags"`
-	References                []Reference `json:"references"`
-	RapidAnalysis             string      `json:"rapidAnalysis"`
-	RapidAnalysisCreated      string      `json:"rapidAnalysisCreated"`
-	RapidAnalysisRevisionDate string      `json:"rapidAnalysisRevisionDate"`
+	Id                        string        `json:"id"`
+	EditorId                  string        `json:"editorId"`
+	Name                      string        `json:"name"`
+	Created                   string        `json:"created"`
+	RevisionDate              string        `json:"revisionDate"`
+	DisclosureDate            string        `json:"disclosureDate"`
+	Document                  string        `json:"document"`
+	Metadata                  TopicMetadata `json:"metadata"`
+	Score                     Score         `json:"score"`
+	Tags                      []Tag         `json:"tags"`
+	References                []Reference   `json:"references"`
+	RapidAnalysis             string        `json:"rapidAnalysis"`
+	RapidAnalysisCreated      string        `json:"rapidAnalysisCreated"`
+	RapidAnalysisRevisionDate string        `json:"rapidAnalysisRevisionDate"`
 }
 
+type Vendor struct {
+	VendorNames  []string `json:"vendorNames"`
+	ProductNames []string `json:"productNames"`
+}
+
+type CVSSV3 struct {
+	Scope                 string  `json:"scope"`
+	Version               string  `json:"version"`
+	BaseScore             float64 `json:"baseScore"`
+	AttackVector          string  `json:"attackVector"`
+	BaseSeverity          string  `json:"baseSeverity"`
+	VectorString          string  `json:"vectorString"`
+	IntegrityImpact       string  `json:"integrityImpact"`
+	UserInteraction       string  `json:"userInteraction"`
+	AttackComplexity      string  `json:"attackComplexity"`
+	AvailabilityImpact    string  `json:"availabilityImpact"`
+	PrivilegesRequired    string  `json:"privilegesRequired"`
+	ConfidentialityImpact string  `json:"confidentialityImpact"`
+}
+
+type BaseMetricV3 struct {
+	CVSSV3              CVSSV3  `json:"cvssV3"`
+	ImpactScore         float64 `json:"impactScore"`
+	ExploitabilityScore float64 `json:"exploitabilityScore"`
+}
+
+type TopicMetadata struct {
+	Vendor             Vendor       `json:"vendor"`
+	CVEState           string       `json:"cveState"`
+	BaseMetricV3       BaseMetricV3 `json:"baseMetricV3"`
+	VulnerableVersions []string     `json:"vulnerable-versions"`
+}
 type Score struct {
 	AttackerValue  float64 `json:"AttackerValue"`
 	Exploitability float64 `json:"Exploitability"`
@@ -92,15 +124,19 @@ type Assesment struct {
 }
 
 func (s *Client) TopicSearch(q string) (*TopicSearch, error) {
-	//req, err := http.NewRequest("GET", fmt.Sprintf("%s/topics?q=%s", BaseUrl, q), nil)
-	req, err := http.Get(fmt.Sprintf("%s/topics?q=%s", BaseUrl, q))
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/topics?q=%s", BaseUrl, q), nil)
+	//req, err := http.Get(fmt.Sprintf("%s/topics?q=%s", BaseUrl, q))
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add("Authentication", fmt.Sprintf("Basic %s", s.apiKey))
-	defer req.Body.Close()
+	req.Header.Set("Authorization", fmt.Sprintf("basic %s", s.apiKey))
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
 	var ret TopicSearch
-	if err := json.NewDecoder(req.Body).Decode(&ret); err != nil {
+	if err := json.NewDecoder(res.Body).Decode(&ret); err != nil {
 		return nil, err
 	}
 
